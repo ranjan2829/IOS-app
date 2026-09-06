@@ -128,20 +128,18 @@ jobs:
       - name: Select Xcode
         run: |
           echo "Available Xcode installs:"
-          ls -d /Applications/Xcode*.app 2>/dev/null
+          ls -d /Applications/Xcode_*.app 2>/dev/null
 
-          # expo-modules-jsi requires Swift tools >= 6.2 to resolve, but the
-          # newest point release on this runner has a stricter Swift/C++
-          # interop check that breaks its RuntimeScheduler.h. Prefer the
-          # second-newest install (still >= the version that ships Swift 6.2)
-          # over the bleeding-edge one; fall back to the newest if it's the
-          # only option.
-          mapfile -t xcodes < <(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V)
-          if [ "${#xcodes[@]}" -ge 2 ]; then
-            selected="${xcodes[-2]}"
-          else
-            selected="${xcodes[-1]:-/Applications/Xcode.app}"
-          fi
+          # expo-modules-jsi's Package.swift requires Swift tools >= 6.2 (only
+          # shipped by the Xcode 26.x line here), but 26.3 has a stricter
+          # Swift/C++ interop check that breaks its RuntimeScheduler.h
+          # (SWIFT_SHARED_REFERENCE diagnostic). Exclude 26.3 and take the
+          # newest of what's left.
+          selected=$(ls -d /Applications/Xcode_*.app 2>/dev/null \
+            | grep -v '26\.3' \
+            | sort -V \
+            | tail -1)
+          selected="${selected:-/Applications/Xcode.app}"
 
           echo "Selecting: $selected"
           sudo xcode-select -s "$selected/Contents/Developer"
