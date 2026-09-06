@@ -1,0 +1,7 @@
+node_modules
+ios
+android
+dist
+web-build
+coverage
+package-lock.json
