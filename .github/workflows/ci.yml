@@ -130,15 +130,14 @@ jobs:
           echo "Available Xcode installs:"
           ls -d /Applications/Xcode_*.app 2>/dev/null
 
-          # expo-modules-jsi's Package.swift requires Swift tools >= 6.2 (only
-          # shipped by the Xcode 26.x line here), but 26.3 has a stricter
+          # expo-modules-jsi's Package.swift requires Swift tools >= 6.2, only
+          # shipped by the Xcode 26.x line here. 26.2/26.3 both hit a stricter
           # Swift/C++ interop check that breaks its RuntimeScheduler.h
-          # (SWIFT_SHARED_REFERENCE diagnostic). Exclude 26.3 and take the
-          # newest of what's left.
-          selected=$(ls -d /Applications/Xcode_*.app 2>/dev/null \
-            | grep -v '26\.3' \
+          # (SWIFT_SHARED_REFERENCE diagnostic) -- try the oldest 26.x on the
+          # runner instead, in case the regression isn't present yet there.
+          selected=$(ls -d /Applications/Xcode_26.*.app 2>/dev/null \
             | sort -V \
-            | tail -1)
+            | head -1)
           selected="${selected:-/Applications/Xcode.app}"
 
           echo "Selecting: $selected"
