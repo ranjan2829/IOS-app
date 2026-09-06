@@ -125,11 +125,26 @@ jobs:
           cache: npm
       - run: npm ci
 
-      - name: Select newest available Xcode
+      - name: Select Xcode
         run: |
-          latest=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)
-          echo "Selecting: ${latest:-/Applications/Xcode.app}"
-          sudo xcode-select -s "${latest:-/Applications/Xcode.app}/Contents/Developer"
+          echo "Available Xcode installs:"
+          ls -d /Applications/Xcode*.app 2>/dev/null
+
+          # expo-modules-jsi requires Swift tools >= 6.2 to resolve, but the
+          # newest point release on this runner has a stricter Swift/C++
+          # interop check that breaks its RuntimeScheduler.h. Prefer the
+          # second-newest install (still >= the version that ships Swift 6.2)
+          # over the bleeding-edge one; fall back to the newest if it's the
+          # only option.
+          mapfile -t xcodes < <(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V)
+          if [ "${#xcodes[@]}" -ge 2 ]; then
+            selected="${xcodes[-2]}"
+          else
+            selected="${xcodes[-1]:-/Applications/Xcode.app}"
+          fi
+
+          echo "Selecting: $selected"
+          sudo xcode-select -s "$selected/Contents/Developer"
           xcodebuild -version
 
       - name: Prebuild native iOS project
